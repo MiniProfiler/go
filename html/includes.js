@@ -150,7 +150,7 @@ var MiniProfiler = (function () {
         var defaults = {
             CustomLink: null,
             CustomTimingNames: null,
-            HasSqlTimings: false,
+            HasCustomTimings: false,
             HasTrivialTimings: false
         };
 
@@ -724,6 +724,7 @@ var MiniProfiler = (function () {
                 case 2: return 'Scalar';
                 case 3: return 'Reader';
             }
+            return typeId || 'None';
         },
 
         shareUrl: function (id) {
@@ -753,16 +754,22 @@ var MiniProfiler = (function () {
             return list;
         },
 
-        getSqlTimings: function (root) {
+        getCustomTimings: function (root) {
             var result = [],
                 addToResults = function (timing) {
-                    if (timing.SqlTimings) {
-                        for (var i = 0, sqlTiming; i < timing.SqlTimings.length; i++) {
-                            sqlTiming = timing.SqlTimings[i];
+                    if (timing.CustomTimings) {
+                        for (var customType in timing.CustomTimings)
+                        {
+                            var customTimings = timing.CustomTimings[customType];
 
-                            // HACK: add info about the parent Timing to each SqlTiming so UI can render
-                            sqlTiming.ParentTimingName = timing.Name;
-                            result.push(sqlTiming);
+                            for (var i = 0, customTiming; i < customTimings.length; i++) {
+                                customTiming = customTimings[i];
+
+                                // HACK: add info about the parent Timing to each CustomTiming so UI can render
+                                customTiming.ParentTimingName = timing.Name;
+                                customTiming.CallType = customType;
+                                result.push(customTiming);
+                            }
                         }
                     }
 
@@ -775,6 +782,9 @@ var MiniProfiler = (function () {
 
             // start adding at the root and recurse down
             addToResults(root);
+            result.sort(function(a, b) {
+                return a.StartMilliseconds - b.StartMilliseconds;
+            });
 
             var removeDuration = function(list, duration) {
 
@@ -881,23 +891,6 @@ var MiniProfiler = (function () {
                 me.nextGap.topReason = determineGap(me.nextGap, root, null);
             }
 
-            return result;
-        },
-
-        getSqlTimingsCount: function (root) {
-            var result = 0,
-                countSql = function (timing) {
-                    if (timing.SqlTimings) {
-                        result += timing.SqlTimings.length;
-                    }
-
-                    if (timing.Children) {
-                        for (var i = 0; i < timing.Children.length; i++) {
-                            countSql(timing.Children[i]);
-                        }
-                    }
-                };
-            countSql(root);
             return result;
         },
 

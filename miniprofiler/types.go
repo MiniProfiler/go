@@ -20,15 +20,18 @@ import (
 	"code.google.com/p/tcgl/identifier"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
+	"runtime/debug"
+	"strings"
 	"time"
 )
 
 const (
-	ExecuteType_None     = 0
-	ExecuteType_NonQuery = 1
-	ExecuteType_Scalar   = 2
-	ExecuteType_Reader   = 3
+	ExecuteType_None     = "0"
+	ExecuteType_NonQuery = "1"
+	ExecuteType_Scalar   = "2"
+	ExecuteType_Reader   = "3"
 )
 
 func newGuid() string {
@@ -51,12 +54,12 @@ type Profile struct {
 	HasAllTrivialTimings                 bool
 	TrivialDurationThresholdMilliseconds float64
 	Head                                 *Timing
-	DurationMillisecondsInSql            float64
+	DurationMillisecondsInCalls          float64
 	ExecutedNonQueries                   int
 	ExecutedReaders                      int
 	ExecutedScalars                      int
-	HasDuplicateSqlTimings               bool
-	HasSqlTimings                        bool
+	HasDuplicateCustomTimings            bool
+	HasCustomTimings                     bool
 	CustomTimingStats                    map[string]*CustomTimingStat
 	CustomTimingNames                    []string
 	CustomLink                           string
@@ -77,11 +80,11 @@ func NewProfile(w http.ResponseWriter, r *http.Request, name string) *Profile {
 	}
 
 	if Enable(r) {
-		p.Id=          newGuid()
-		p.Name=        name
-		p.start=       time.Now()
-		p.MachineName= MachineName()
-		p.Root= &Timing{
+		p.Id = newGuid()
+		p.Name = name
+		p.start = time.Now()
+		p.MachineName = MachineName()
+		p.Root = &Timing{
 			Id:     newGuid(),
 			IsRoot: true,
 		}
@@ -126,23 +129,25 @@ func (p *Profile) Finalize() {
 			t.DurationWithoutChildrenMilliseconds -= c.DurationMilliseconds
 		}
 
-		if t.HasSqlTimings {
-			p.HasSqlTimings = true
+		if t.HasCustomTimings {
+			p.HasCustomTimings = true
 		}
 
-		for _, r := range t.SqlTimings {
-			p.DurationMillisecondsInSql += r.DurationMilliseconds
-			t.SqlTimingsDurationMilliseconds += r.DurationMilliseconds
-			switch r.ExecuteType {
-			case ExecuteType_NonQuery:
-				p.ExecutedNonQueries++
-				t.ExecutedNonQueries++
-			case ExecuteType_Scalar:
-				p.ExecutedScalars++
-				t.ExecutedScalars++
-			case ExecuteType_Reader:
-				p.ExecutedReaders++
-				t.ExecutedReaders++
+		for _, timings := range t.CustomTimings {
+			for _, r := range timings {
+				p.DurationMillisecondsInCalls += r.DurationMilliseconds
+				t.CustomTimingsDurationMilliseconds += r.DurationMilliseconds
+				switch r.ExecuteType {
+				case ExecuteType_NonQuery:
+					p.ExecutedNonQueries++
+					t.ExecutedNonQueries++
+				case ExecuteType_Scalar:
+					p.ExecutedScalars++
+					t.ExecutedScalars++
+				case ExecuteType_Reader:
+					p.ExecutedReaders++
+					t.ExecutedReaders++
+				}
 			}
 		}
 
@@ -206,19 +211,8 @@ func (p *Profile) Step(name string, f func()) {
 	}
 }
 
-// AddSqlTiming adds a new SqlTiming to the current node.
-func (p *Profile) AddSqlTiming(s *SqlTiming) {
-	if p.Root == nil {
-		return
-	}
-	t := p.current
-	s.ParentTimingId = t.Id
-	t.SqlTimings = append(t.SqlTimings, s)
-	t.HasSqlTimings = true
-}
-
 // AddCustomTiming adds a new CustomTiming with given type to the current node.
-func (p *Profile) AddCustomTiming(Type string, s *CustomTiming) {
+func (p *Profile) AddCustomTiming(callType, executeType string, start, duration float64, command string) {
 	if p.Root == nil {
 		return
 	}
@@ -227,16 +221,49 @@ func (p *Profile) AddCustomTiming(Type string, s *CustomTiming) {
 		t.CustomTimings = make(map[string][]*CustomTiming)
 		t.CustomTimingStats = make(map[string]*CustomTimingStat)
 	}
-
-	s.ParentTimingId = t.Id
-	t.CustomTimings[Type] = append(t.CustomTimings[Type], s)
-	c := t.CustomTimingStats[Type]
+	s := &CustomTiming{
+		ParentTimingId:         t.Id,
+		StartMilliseconds:      start,
+		DurationMilliseconds:   duration,
+		FormattedCommandString: html.EscapeString(command),
+		StackTraceSnippet:      getStackSnippet(),
+		ExecuteType:            executeType,
+	}
+	t.CustomTimings[callType] = append(t.CustomTimings[callType], s)
+	c := t.CustomTimingStats[callType]
 	if c == nil {
 		c = new(CustomTimingStat)
-		t.CustomTimingStats[Type] = c
+		t.CustomTimingStats[callType] = c
 	}
 	c.Count++
 	c.Duration += s.DurationMilliseconds
+	t.HasCustomTimings = true
+}
+
+func getStackSnippet() string {
+	stack := debug.Stack()
+	lines := strings.Split(string(stack), "\n")
+	var snippet []string
+	for i := 0; i < len(lines); i++ {
+		idx := strings.LastIndex(lines[i], " ")
+		if idx == -1 {
+			break
+		}
+
+		if i+1 < len(lines) && strings.HasPrefix(lines[i+1], "\t") {
+			i++
+			snip := strings.TrimSpace(lines[i])
+			snip = strings.Split(snip, ":")[0]
+			sp := strings.Split(snip, ".")
+			snip = sp[len(sp)-1]
+			if strings.Contains(snip, "miniprofiler") || strings.HasPrefix(snip, "_func_") || snip == "ServeHTTP" || snip == "ProfileRequest" {
+				continue
+			}
+			snippet = append(snippet, snip)
+		}
+	}
+
+	return strings.Join(snippet[2:], " ")
 }
 
 type Timing struct {
@@ -246,14 +273,13 @@ type Timing struct {
 	StartMilliseconds                   float64
 	Children                            []*Timing
 	KeyValues                           map[string]string
-	SqlTimings                          []*SqlTiming
 	ParentTimingId                      string
 	DurationWithoutChildrenMilliseconds float64
-	SqlTimingsDurationMilliseconds      float64
+	CustomTimingsDurationMilliseconds   float64
 	IsTrivial                           bool
 	HasChildren                         bool
-	HasSqlTimings                       bool
-	HasDuplicateSqlTimings              bool
+	HasCustomTimings                    bool
+	HasDuplicateCustomTimings           bool
 	IsRoot                              bool
 	Depth                               int
 	ExecutedReaders                     int
@@ -265,26 +291,26 @@ type Timing struct {
 	parent *Timing
 }
 
-type SqlTiming struct {
+type CustomTiming struct {
 	Id                             string
-	ExecuteType                    int
+	ExecuteType                    string
 	CommandString                  string
 	FormattedCommandString         string
 	StackTraceSnippet              string
 	StartMilliseconds              float64
 	DurationMilliseconds           float64
 	FirstFetchDurationMilliseconds float64
-	Parameters                     []*SqlTimingParameter
+	Parameters                     []*CustomTimingParameter
 	ParentTimingId                 string
 	IsDuplicate                    bool
 }
 
-type SqlTimingParameter struct {
-	ParentSqlTimingId string
-	Name              string
-	Value             string
-	DbType            string
-	Size              int
+type CustomTimingParameter struct {
+	ParentCustomTimingId string
+	Name                 string
+	Value                string
+	Type                 string
+	Size                 int
 }
 
 type ClientTimings struct {
@@ -300,12 +326,6 @@ type ClientTiming struct {
 	Name     string
 	Start    int64
 	Duration int64
-}
-
-type CustomTiming struct {
-	ParentTimingId       string
-	StartMilliseconds    float64
-	DurationMilliseconds float64
 }
 
 type CustomTimingStat struct {

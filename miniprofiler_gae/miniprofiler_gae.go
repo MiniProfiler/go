@@ -87,10 +87,11 @@ func (c Context) Call(service, method string, in, out appengine_internal.ProtoMe
 	err := c.Context.Call(service, method, in, out, opts)
 	if service != "__go__" {
 		v := c.Context.Stats.RPCStats[len(c.Context.Stats.RPCStats)-1]
-		c.AddCustomTiming("RPC", &miniprofiler.CustomTiming{
-			StartMilliseconds:    float64(v.Offset.Nanoseconds()) / 1000000,
-			DurationMilliseconds: float64(v.Duration.Nanoseconds()) / 1000000,
-		})
+		c.AddCustomTiming(service, service,
+			float64(v.Offset.Nanoseconds())/1000000,
+			float64(v.Duration.Nanoseconds())/1000000,
+			fmt.Sprintf("%v\n\n%v", method, v.Request()),
+		)
 	}
 	return err
 }
@@ -101,7 +102,7 @@ func NewHandler(f func(Context, http.ResponseWriter, *http.Request)) appstats.Ha
 		h := miniprofiler.NewHandler(func(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) {
 			pc := Context{
 				Context: c.(appstats.Context),
-				Profile:  p,
+				Profile: p,
 			}
 			p.Name = miniprofiler.FuncName(f)
 			f(pc, w, r)
