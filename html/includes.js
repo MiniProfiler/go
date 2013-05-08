@@ -143,7 +143,7 @@ var MiniProfiler = (function () {
     };
 
     var renderTemplate = function (json) {
-        return $(template('#profilerTemplate', json));
+        return $($.trim(template('#profilerTemplate', json)));
     };
 
     var template = function (name, o) {
