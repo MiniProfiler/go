@@ -4,7 +4,7 @@ import (
 	"html/template"
 )
 
-const tmpl_include = `<script async type="text/javascript" id="mini-profiler" src="{{.Path}}includes.js?v={{.Version}}" data-version="{{.Version}}" data-path="{{.Path}}" data-current-id="{{.CurrentId}}" data-ids="{{.Ids}}" data-position="{{.Position}}" data-trivial="{{.ShowTrivial}}" data-children="{{.ShowChildren}}" data-max-traces="{{.MaxTracesToShow}}" data-controls="{{.ShowControls}}" data-authorized="{{.Authorized}}" data-toggle-shortcut="{{.ToggleShortcut}}" data-start-hidden="{{.StartHidden}}"></script>`
+const tmpl_include = `<script async type="text/javascript" id="mini-profiler" src="{{.Path}}includes.js?v={{.Version}}" data-version="{{.Version}}" data-path="{{.Path}}" data-current-id="{{.CurrentId}}" data-ids="{{.Ids}}" data-position="{{.Position}}" data-trivial="{{.ShowTrivial}}" data-children="{{.ShowChildren}}" data-max-traces="{{.MaxTracesToShow}}" data-controls="{{.ShowControls}}" data-authorized="{{.Authorized}}" data-toggle-shortcut="{{.ToggleShortcut}}" data-start-hidden="{{.StartHidden}}" data-trivial-milliseconds="{{.TrivialMilliseconds}}"></script>`
 
 const tmpl_share = `<html>
     <head>

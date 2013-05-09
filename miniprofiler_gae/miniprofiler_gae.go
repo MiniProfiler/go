@@ -87,7 +87,7 @@ func (c Context) Call(service, method string, in, out appengine_internal.ProtoMe
 	err := c.Context.Call(service, method, in, out, opts)
 	if service != "__go__" {
 		v := c.Context.Stats.RPCStats[len(c.Context.Stats.RPCStats)-1]
-		c.AddCustomTiming(service, service,
+		c.AddCustomTiming(service, method,
 			float64(v.Offset.Nanoseconds())/1000000,
 			float64(v.Duration.Nanoseconds())/1000000,
 			fmt.Sprintf("%v\n\n%v", method, v.Request()),
@@ -108,8 +108,7 @@ func NewHandler(f func(Context, http.ResponseWriter, *http.Request)) appstats.Ha
 			f(pc, w, r)
 
 			if pc.Profile.Root != nil {
-				pc.Profile.CustomLink = pc.URL()
-				pc.Profile.CustomLinkName = "appstats"
+				pc.Profile.CustomLinks["appstats"] = pc.URL()
 			}
 		})
 		h.ServeHTTP(w, r)

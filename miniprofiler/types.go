@@ -27,43 +27,22 @@ import (
 	"time"
 )
 
-const (
-	ExecuteType_None     = "0"
-	ExecuteType_NonQuery = "1"
-	ExecuteType_Scalar   = "2"
-	ExecuteType_Reader   = "3"
-)
-
 func newGuid() string {
 	return identifier.NewUUID().String()
 }
 
 type Profile struct {
-	Id                                   string
-	Name                                 string
-	start                                time.Time
-	Started                              string
-	MachineName                          string
-	Level                                int
-	Root                                 *Timing
-	User                                 string
-	HasUserViewed                        bool
-	ClientTimings                        *ClientTimings
-	DurationMilliseconds                 float64
-	HasTrivialTimings                    bool
-	HasAllTrivialTimings                 bool
-	TrivialDurationThresholdMilliseconds float64
-	Head                                 *Timing
-	DurationMillisecondsInCalls          float64
-	ExecutedNonQueries                   int
-	ExecutedReaders                      int
-	ExecutedScalars                      int
-	HasDuplicateCustomTimings            bool
-	HasCustomTimings                     bool
-	CustomTimingStats                    map[string]*CustomTimingStat
-	CustomTimingNames                    []string
-	CustomLink                           string
-	CustomLinkName                       string
+	Id                   string
+	Name                 string
+	start                time.Time
+	Started              string
+	MachineName          string
+	Root                 *Timing
+	User                 string
+	HasUserViewed        bool
+	ClientTimings        *ClientTimings
+	DurationMilliseconds float64
+	CustomLinks          map[string]string
 
 	w http.ResponseWriter
 	r *http.Request
@@ -75,8 +54,9 @@ type Profile struct {
 // For use only by miniprofiler extensions.
 func NewProfile(w http.ResponseWriter, r *http.Request, name string) *Profile {
 	p := &Profile{
-		w: w,
-		r: r,
+		CustomLinks: make(map[string]string),
+		w:           w,
+		r:           r,
 	}
 
 	if Enable(r) {
@@ -85,8 +65,7 @@ func NewProfile(w http.ResponseWriter, r *http.Request, name string) *Profile {
 		p.start = time.Now()
 		p.MachineName = MachineName()
 		p.Root = &Timing{
-			Id:     newGuid(),
-			IsRoot: true,
+			Id: newGuid(),
 		}
 		p.current = p.Root
 
@@ -118,58 +97,6 @@ func (p *Profile) Finalize() {
 	p.DurationMilliseconds = Since(p.start)
 	p.Root.DurationMilliseconds = p.DurationMilliseconds
 
-	customNames := make(map[string]bool)
-	timings := []*Timing{p.Root}
-	for i := 0; i < len(timings); i++ {
-		t := timings[i]
-		timings = append(timings, t.Children...)
-
-		t.DurationWithoutChildrenMilliseconds = t.DurationMilliseconds
-		for _, c := range t.Children {
-			t.DurationWithoutChildrenMilliseconds -= c.DurationMilliseconds
-		}
-
-		if t.HasCustomTimings {
-			p.HasCustomTimings = true
-		}
-
-		for _, timings := range t.CustomTimings {
-			for _, r := range timings {
-				p.DurationMillisecondsInCalls += r.DurationMilliseconds
-				t.CustomTimingsDurationMilliseconds += r.DurationMilliseconds
-				switch r.ExecuteType {
-				case ExecuteType_NonQuery:
-					p.ExecutedNonQueries++
-					t.ExecutedNonQueries++
-				case ExecuteType_Scalar:
-					p.ExecutedScalars++
-					t.ExecutedScalars++
-				case ExecuteType_Reader:
-					p.ExecutedReaders++
-					t.ExecutedReaders++
-				}
-			}
-		}
-
-		for n, c := range t.CustomTimingStats {
-			customNames[n] = true
-			if p.CustomTimingStats == nil {
-				p.CustomTimingStats = make(map[string]*CustomTimingStat)
-			}
-			pc := p.CustomTimingStats[n]
-			if pc == nil {
-				pc = new(CustomTimingStat)
-				p.CustomTimingStats[n] = pc
-			}
-			pc.Count += c.Count
-			pc.Duration += c.Duration
-		}
-	}
-
-	for n := range customNames {
-		p.CustomTimingNames = append(p.CustomTimingNames, n)
-	}
-
 	Store(p.r, p)
 }
 
@@ -193,11 +120,8 @@ func (p *Profile) Step(name string, f func()) {
 		t := &Timing{
 			Id:                newGuid(),
 			Name:              name,
-			ParentTimingId:    p.current.Id,
-			Depth:             p.current.Depth + 1,
 			StartMilliseconds: Since(p.start),
 		}
-		p.current.HasChildren = true
 		p.current.Children = append(p.current.Children, t)
 		t.parent = p.current
 		p.current = t
@@ -219,25 +143,15 @@ func (p *Profile) AddCustomTiming(callType, executeType string, start, duration 
 	t := p.current
 	if t.CustomTimings == nil {
 		t.CustomTimings = make(map[string][]*CustomTiming)
-		t.CustomTimingStats = make(map[string]*CustomTimingStat)
 	}
 	s := &CustomTiming{
-		ParentTimingId:         t.Id,
-		StartMilliseconds:      start,
-		DurationMilliseconds:   duration,
-		FormattedCommandString: html.EscapeString(command),
-		StackTraceSnippet:      getStackSnippet(),
-		ExecuteType:            executeType,
+		StartMilliseconds:    start,
+		DurationMilliseconds: duration,
+		CommandString:        html.EscapeString(command),
+		StackTraceSnippet:    getStackSnippet(),
+		ExecuteType:          executeType,
 	}
 	t.CustomTimings[callType] = append(t.CustomTimings[callType], s)
-	c := t.CustomTimingStats[callType]
-	if c == nil {
-		c = new(CustomTimingStat)
-		t.CustomTimingStats[callType] = c
-	}
-	c.Count++
-	c.Duration += s.DurationMilliseconds
-	t.HasCustomTimings = true
 }
 
 func getStackSnippet() string {
@@ -267,26 +181,12 @@ func getStackSnippet() string {
 }
 
 type Timing struct {
-	Id                                  string
-	Name                                string
-	DurationMilliseconds                float64
-	StartMilliseconds                   float64
-	Children                            []*Timing
-	KeyValues                           map[string]string
-	ParentTimingId                      string
-	DurationWithoutChildrenMilliseconds float64
-	CustomTimingsDurationMilliseconds   float64
-	IsTrivial                           bool
-	HasChildren                         bool
-	HasCustomTimings                    bool
-	HasDuplicateCustomTimings           bool
-	IsRoot                              bool
-	Depth                               int
-	ExecutedReaders                     int
-	ExecutedScalars                     int
-	ExecutedNonQueries                  int
-	CustomTimingStats                   map[string]*CustomTimingStat
-	CustomTimings                       map[string][]*CustomTiming
+	Id                   string
+	Name                 string
+	DurationMilliseconds float64
+	StartMilliseconds    float64
+	Children             []*Timing
+	CustomTimings        map[string][]*CustomTiming
 
 	parent *Timing
 }
@@ -295,22 +195,10 @@ type CustomTiming struct {
 	Id                             string
 	ExecuteType                    string
 	CommandString                  string
-	FormattedCommandString         string
 	StackTraceSnippet              string
 	StartMilliseconds              float64
 	DurationMilliseconds           float64
 	FirstFetchDurationMilliseconds float64
-	Parameters                     []*CustomTimingParameter
-	ParentTimingId                 string
-	IsDuplicate                    bool
-}
-
-type CustomTimingParameter struct {
-	ParentCustomTimingId string
-	Name                 string
-	Value                string
-	Type                 string
-	Size                 int
 }
 
 type ClientTimings struct {
@@ -326,9 +214,4 @@ type ClientTiming struct {
 	Name     string
 	Start    int64
 	Duration int64
-}
-
-type CustomTimingStat struct {
-	Duration float64
-	Count    int
 }

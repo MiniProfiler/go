@@ -142,23 +142,83 @@ var MiniProfiler = (function () {
         }
     };
 
+    var processJson = function (json) {
+        json.HasDuplicateCustomTimings = false;
+        json.HasCustomTimings = false;
+        json.HasTrivialTimings = false;
+        json.CustomTimingStats = {};
+        json.CustomLinks = json.CustomLinks || {};
+        json.TrivialMilliseconds = options.trivialMilliseconds;
+        json.Root.ParentTimingId = json.Id;
+        processTiming(json, json.Root, 0);
+    };
+
+    var processTiming = function (json, timing, depth) {
+        timing.DurationWithoutChildrenMilliseconds = timing.DurationMilliseconds;
+        timing.Depth = depth;
+        timing.IsTrivial = timing.DurationMilliseconds < options.trivialMilliseconds;
+        timing.HasCustomTimings = timing.CustomTimings ? true : false;
+        timing.HasDuplicateCustomTimings = {};
+        json.HasCustomTimings = json.HasCustomTimings || timing.HasCustomTimings;
+        json.HasTrivialTimings = json.HasTrivialTimings || timing.IsTrivial;
+
+        if (timing.Children) {
+            for (var i = 0; i < timing.Children.length; i++) {
+                timing.Children[i].ParentTimingId = timing.Id;
+                processTiming(json, timing.Children[i], depth + 1);
+                timing.DurationWithoutChildrenMilliseconds -= timing.Children[i].DurationMilliseconds;
+            }
+        } else {
+            timing.Children = [];
+        }
+
+        if (timing.CustomTimings) {
+            timing.CustomTimingStats = {};
+            for (var customType in timing.CustomTimings) {
+                var customTimings = timing.CustomTimings[customType];
+                var customStat = {
+                    Duration: 0,
+                    Count: 0
+                };
+                var duplicates = {};
+                for (var i = 0; i < customTimings.length; i++) {
+                    var customTiming = customTimings[i];
+                    customTiming.ParentTimingId = timing.Id;
+                    customStat.Duration += customTiming.DurationMilliseconds;
+                    customStat.Count++;
+                    if (customTiming.CommandString && duplicates[customTiming.CommandString]) {
+                        customTiming.IsDuplicate = true;
+                        timing.HasDuplicateCustomTimings[customType] = true;
+                        json.HasDuplicateCustomTimings = true;
+                    } else {
+                        duplicates[customTiming.CommandString] = true;
+                    }
+                }
+                timing.CustomTimingStats[customType] = customStat;
+                if (!json.CustomTimingStats[customType]) {
+                    json.CustomTimingStats[customType] = {
+                        Duration: 0,
+                        Count: 0
+                    };
+                }
+                json.CustomTimingStats[customType].Duration += customStat.Duration;
+                json.CustomTimingStats[customType].Count += customStat.Count;
+            }
+        } else {
+            timing.CustomTimings = {};
+        }
+    };
+
     var renderTemplate = function (json) {
+        processJson(json);
         return $($.trim(template('#profilerTemplate', json)));
     };
 
     var template = function (name, o) {
-        var defaults = {
-            CustomLink: null,
-            CustomTimingNames: null,
-            HasCustomTimings: false,
-            HasTrivialTimings: false
-        };
-
         try {
             var tmpl = tmplCache[name] || (tmplCache[name] = _.template($(name).html()));
-            var od = _.defaults(o, defaults);
-            od._self = od;
-            var html = tmpl(od);
+            o._self = o;
+            var html = tmpl(o);
             return html;
         } catch (e) {
             console.log("error with: " + name + ": " + e);
@@ -592,6 +652,9 @@ var MiniProfiler = (function () {
                 if (script.getAttribute('data-max-traces'))
                     var maxTraces = parseInt(script.getAttribute('data-max-traces'));
 
+                if (script.getAttribute('data-trivial-milliseconds'))
+                    var trivialMilliseconds = parseInt(script.getAttribute('data-trivial-milliseconds'));
+
                 if (script.getAttribute('data-trivial') === 'true') var trivial = true;
                 if (script.getAttribute('data-children') == 'true') var children = true;
                 if (script.getAttribute('data-controls') == 'true') var controls = true;
@@ -604,6 +667,7 @@ var MiniProfiler = (function () {
                     version: version,
                     renderPosition: position,
                     showTrivial: trivial,
+                    trivialMilliseconds: trivialMilliseconds,
                     showChildrenTime: children,
                     maxTracesToShow: maxTraces,
                     showControls: controls,
@@ -714,17 +778,6 @@ var MiniProfiler = (function () {
                 result += '&nbsp;';
             }
             return result;
-        },
-
-        renderExecuteType: function (typeId) {
-            // see StackExchange.Profiling.ExecuteType enum
-            switch (typeId) {
-                case 0: return 'None';
-                case 1: return 'NonQuery';
-                case 2: return 'Scalar';
-                case 3: return 'Reader';
-            }
-            return typeId || 'None';
         },
 
         shareUrl: function (id) {

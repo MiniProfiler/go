@@ -46,15 +46,16 @@ var (
 	// The default is to use the machine's hostname.
 	MachineName func() string = Hostname
 
-	Position        = "left"
-	ShowTrivial     = false
-	ShowChildren    = false
-	MaxTracesToShow = 15
-	ShowControls    = true
-	ToggleShortcut  = "Alt+P"
-	StartHidden     = false
+	Position            = "left"
+	ShowTrivial         = false
+	ShowChildren        = false
+	MaxTracesToShow     = 15
+	ShowControls        = true
+	ToggleShortcut      = "Alt+P"
+	StartHidden         = false
+	TrivialMilliseconds = 12.0
 
-	Version = "0.3"
+	Version = "3.0.0"
 
 	staticFiles map[string][]byte
 )
@@ -260,19 +261,21 @@ func (p *Profile) Includes() template.HTML {
 		Authorized                bool
 		ToggleShortcut            string
 		StartHidden               bool
+		TrivialMilliseconds       float64
 	}{
-		Ids:             current,
-		Path:            PATH,
-		Version:         Version,
-		Position:        Position,
-		ShowTrivial:     ShowTrivial,
-		ShowChildren:    ShowChildren,
-		MaxTracesToShow: MaxTracesToShow,
-		ShowControls:    ShowControls,
-		CurrentId:       current,
-		Authorized:      authorized,
-		ToggleShortcut:  ToggleShortcut,
-		StartHidden:     StartHidden,
+		Ids:                 current,
+		Path:                PATH,
+		Version:             Version,
+		Position:            Position,
+		ShowTrivial:         ShowTrivial,
+		ShowChildren:        ShowChildren,
+		MaxTracesToShow:     MaxTracesToShow,
+		ShowControls:        ShowControls,
+		CurrentId:           current,
+		Authorized:          authorized,
+		ToggleShortcut:      ToggleShortcut,
+		StartHidden:         StartHidden,
+		TrivialMilliseconds: TrivialMilliseconds,
 	}
 
 	var w bytes.Buffer
