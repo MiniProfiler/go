@@ -20,21 +20,13 @@ Package miniprofiler_gae is a simple but effective mini-profiler for app engine.
 miniprofiler_gae hooks into the appstats package, and all app engine RPCs are automatically profiled.
 An appstats link is listed in each Profile.
 
-Installation
-
-In your main .go file:
-
-    import mpg "github.com/mjibson/MiniProfiler/go/miniprofiler_gae"
-
-Change all handler functions to the following signature:
+To use this package, change your HTTP handler functions to use this signature:
 
     func(mpg.Context, http.ResponseWriter, *http.Request)
 
-Wrap all calls to those functions in the miniprofiler.NewHandler wrapper:
+Register them in the usual way, wrapping them with NewHandler.
 
-    http.Handle("/", mpg.NewHandler(Main))
-
-Send output of miniprofiler.Includes to your HTML (it is empty if Enable returns
+Send output of p.Includes(r) to your HTML (it is empty if Enable returns
 false).
 
 By default, miniprofiler is enabled on dev for all and on prod for admins.
@@ -51,9 +43,9 @@ should be called with the name of the step and a closure:
 
 Configuration
 
-Refer to the variables section of the documentation: http://godoc.org/github.com/mjibson/MiniProfiler/go/miniprofiler#_variables.
+Refer to the variables section of the documentation: http://godoc.org/github.com/MiniProfiler/go/miniprofiler#_variables.
 
-Also refer to the base miniprofiler docs: http://godoc.org/github.com/mjibson/MiniProfiler/go/miniprofiler.
+Also refer to the base miniprofiler docs: http://godoc.org/github.com/MiniProfiler/go/miniprofiler.
 
 Other implementations and resources: http://miniprofiler.com.
 */

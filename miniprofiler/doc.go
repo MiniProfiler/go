@@ -17,19 +17,11 @@
 /*
 Package miniprofiler is a simple but effective mini-profiler for websites.
 
-Installation
-
-In your main .go file:
-
-    import "github.com/mjibson/MiniProfiler/go/miniprofiler"
-
-Change all handler functions to the following signature:
+To use this package, change your HTTP handler functions to use this signature:
 
     func(*miniprofiler.Profile, http.ResponseWriter, *http.Request)
 
-Wrap all calls to those functions in the miniprofiler.NewHandler wrapper:
-
-    http.Handle("/", miniprofiler.NewHandler(Main))
+Register them in the usual way, wrapping them with NewHandler.
 
 Set miniprofiler.Enable to a function that returns true if profiling is enabled:
 
@@ -44,7 +36,7 @@ Set miniprofiler.Enable to a function that returns true if profiling is enabled:
 Set miniprofiler.Store and miniprofiler.Get to functions that can get and store
 Profile data, perhaps in memory, redis, or a database. Get key is Profile.Id.
 
-Send output of p.Includes to your HTML (it is empty if Enable returns
+Send output of p.Includes(r) to your HTML (it is empty if Enable returns
 false).
 
 Step
@@ -60,14 +52,17 @@ AddCustomTiming
 
 AddCustomTiming can be used to record any kind of call (redis, RPC, etc.)
 
-    p.AddCustomTiming("RPC", &miniprofiler.CustomTiming{
-        StartMilliseconds:    1.0,
-        DurationMilliseconds: 5.2,
-    })
+    p.AddCustomTiming(
+        "redis",       // call type
+        "get",         // execute type
+        1.0,           // start milliseconds
+        5.2,           // duration milliseconds
+        "get key_name" // command string
+    )
 
 Example
 
-Here's a full application:
+This is a small example using this package.
 
     package main
 
@@ -77,12 +72,9 @@ Here's a full application:
 
     func Index(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) {
         p.Step("something", func() {
-            p.AddCustomTiming("RPC", &miniprofiler.CustomTiming{
-                StartMilliseconds:    1.0,
-                DurationMilliseconds: 5.2,
-            })
+            p.AddCustomTiming("RPC", "get", 1.0, 5.2, "get key_name")
         })
-        fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes())
+        fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes(r))
     }
 
     func main() {
