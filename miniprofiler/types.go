@@ -35,7 +35,7 @@ type Profile struct {
 	Id                   string
 	Name                 string
 	start                time.Time
-	Started              string
+	Started              int64
 	MachineName          string
 	Root                 *Timing
 	User                 string
@@ -93,7 +93,7 @@ func (p *Profile) Finalize() {
 	}
 	p.Root.Name = p.r.Method + " " + u.String()
 
-	p.Started = fmt.Sprintf("/Date(%d)/", p.start.Unix()*1000)
+	p.Started = p.start.Unix()*1000
 	p.DurationMilliseconds = Since(p.start)
 	p.Root.DurationMilliseconds = p.DurationMilliseconds
 

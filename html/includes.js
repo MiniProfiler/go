@@ -150,6 +150,7 @@ var MiniProfiler = (function () {
         json.CustomLinks = json.CustomLinks || {};
         json.TrivialMilliseconds = options.trivialMilliseconds;
         json.Root.ParentTimingId = json.Id;
+        json.Started = new Date(json.Started);
         processTiming(json, json.Root, 0);
     };
 
