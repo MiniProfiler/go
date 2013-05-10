@@ -38,8 +38,6 @@ type Profile struct {
 	Started              int64
 	MachineName          string
 	Root                 *Timing
-	User                 string
-	HasUserViewed        bool
 	ClientTimings        *ClientTimings
 	DurationMilliseconds float64
 	CustomLinks          map[string]string

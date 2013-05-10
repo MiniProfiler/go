@@ -106,10 +106,6 @@ func results(w http.ResponseWriter, r *http.Request) {
 			needsSave = true
 		}
 	}
-	if !p.HasUserViewed {
-		p.HasUserViewed = true
-		needsSave = true
-	}
 
 	if needsSave {
 		Store(r, p)
