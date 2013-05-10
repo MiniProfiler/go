@@ -125,22 +125,16 @@ func results(w http.ResponseWriter, r *http.Request) {
 	if isPopup {
 		w.Write(j)
 	} else {
-		v := struct {
-			Name     string
-			Duration float64
-			Path     string
-			Json     template.JS
-			Includes template.HTML
-			Version  string
-		}{
-			Name:     p.Name,
-			Duration: p.DurationMilliseconds,
-			Path:     PATH,
-			Json:     template.JS(j),
-			Includes: p.Includes(),
-			Version:  Version,
+		v := map[string]interface{}{
+			"name":     p.Name,
+			"duration": p.DurationMilliseconds,
+			"path":     PATH,
+			"json":     template.JS(j),
+			"includes": p.Includes(),
+			"version":  Version,
 		}
 
+		w.Header().Add("Content-Type", "text/html")
 		shareHtml.Execute(w, v)
 	}
 }
@@ -251,31 +245,20 @@ func (p *Profile) Includes() template.HTML {
 	current := p.Id
 	authorized := true
 
-	v := struct {
-		Ids                       string
-		Path, Version, Position   string
-		ShowTrivial, ShowChildren bool
-		MaxTracesToShow           int
-		ShowControls              bool
-		CurrentId                 string
-		Authorized                bool
-		ToggleShortcut            string
-		StartHidden               bool
-		TrivialMilliseconds       float64
-	}{
-		Ids:                 current,
-		Path:                PATH,
-		Version:             Version,
-		Position:            Position,
-		ShowTrivial:         ShowTrivial,
-		ShowChildren:        ShowChildren,
-		MaxTracesToShow:     MaxTracesToShow,
-		ShowControls:        ShowControls,
-		CurrentId:           current,
-		Authorized:          authorized,
-		ToggleShortcut:      ToggleShortcut,
-		StartHidden:         StartHidden,
-		TrivialMilliseconds: TrivialMilliseconds,
+	v := map[string]interface{}{
+		"ids":                 current,
+		"path":                PATH,
+		"version":             Version,
+		"position":            Position,
+		"showTrivial":         ShowTrivial,
+		"showChildren":        ShowChildren,
+		"maxTracesToShow":     MaxTracesToShow,
+		"showControls":        ShowControls,
+		"currentId":           current,
+		"authorized":          authorized,
+		"toggleShortcut":      ToggleShortcut,
+		"startHidden":         StartHidden,
+		"trivialMilliseconds": TrivialMilliseconds,
 	}
 
 	var w bytes.Buffer
