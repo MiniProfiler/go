@@ -22,7 +22,7 @@ import (
 	"appengine/user"
 	"appengine_internal"
 	"fmt"
-	"github.com/mjibson/MiniProfiler/go/miniprofiler"
+	"github.com/MiniProfiler/go/miniprofiler"
 	"github.com/mjibson/appstats"
 	"net/http"
 )
