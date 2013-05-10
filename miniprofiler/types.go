@@ -143,6 +143,7 @@ func (p *Profile) AddCustomTiming(callType, executeType string, start, duration 
 		t.CustomTimings = make(map[string][]*CustomTiming)
 	}
 	s := &CustomTiming{
+		Id:                   newGuid(),
 		StartMilliseconds:    start,
 		DurationMilliseconds: duration,
 		CommandString:        html.EscapeString(command),
