@@ -91,7 +91,7 @@ func (p *Profile) Finalize() {
 	}
 	p.Root.Name = p.r.Method + " " + u.String()
 
-	p.Started = p.start.Unix()*1000
+	p.Started = p.start.Unix() * 1000
 	p.DurationMilliseconds = Since(p.start)
 	p.Root.DurationMilliseconds = p.DurationMilliseconds
 
