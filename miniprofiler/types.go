@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -44,8 +45,18 @@ type Profile struct {
 
 	w http.ResponseWriter
 	r *http.Request
+}
 
-	current *Timing
+type Timing struct {
+	Id                   string
+	Name                 string
+	DurationMilliseconds float64
+	StartMilliseconds    float64
+	Children             []*Timing
+	CustomTimings        map[string][]*CustomTiming
+
+	profile *Profile
+	sync.Mutex
 }
 
 // NewProfile creates a new Profile with given name.
@@ -65,7 +76,6 @@ func NewProfile(w http.ResponseWriter, r *http.Request, name string) *Profile {
 		p.Root = &Timing{
 			Id: newGuid(),
 		}
-		p.current = p.Root
 
 		w.Header().Add("X-MiniProfiler-Ids", fmt.Sprintf("[\"%s\"]", p.Id))
 	}
@@ -111,34 +121,30 @@ func (p *Profile) Json() []byte {
 	return b
 }
 
-// Step adds a new child node with given name.
-// f should generally be in a closure.
-func (p *Profile) Step(name string, f func()) {
-	if p.Root != nil {
+func (T *Timing) Step(name string, f func(t *Timing)) {
+	if T != nil {
 		t := &Timing{
 			Id:                newGuid(),
 			Name:              name,
-			StartMilliseconds: Since(p.start),
+			StartMilliseconds: Since(T.profile.start),
+			profile:           T.profile,
 		}
-		p.current.Children = append(p.current.Children, t)
-		t.parent = p.current
-		p.current = t
-
-		f()
-
-		t.DurationMilliseconds = Since(p.start) - t.StartMilliseconds
-		p.current = p.current.parent
+		T.addChild(t)
+		f(t)
+		t.DurationMilliseconds = Since(t.profile.start) - t.StartMilliseconds
 	} else {
-		f()
+		f(nil)
 	}
 }
 
-// AddCustomTiming adds a new CustomTiming with given type to the current node.
-func (p *Profile) AddCustomTiming(callType, executeType string, start, duration float64, command string) {
-	if p.Root == nil {
-		return
-	}
-	t := p.current
+func (T *Timing) addChild(t *Timing) {
+	T.Lock()
+	T.Children = append(T.Children, t)
+	T.Unlock()
+}
+
+func (t *Timing) AddCustomTiming(callType, executeType string, start, duration float64, command string) {
+	t.Lock()
 	if t.CustomTimings == nil {
 		t.CustomTimings = make(map[string][]*CustomTiming)
 	}
@@ -151,6 +157,7 @@ func (p *Profile) AddCustomTiming(callType, executeType string, start, duration 
 		ExecuteType:          executeType,
 	}
 	t.CustomTimings[callType] = append(t.CustomTimings[callType], s)
+	t.Unlock()
 }
 
 func getStackSnippet() string {
@@ -177,17 +184,6 @@ func getStackSnippet() string {
 	}
 
 	return strings.Join(snippet[2:], " ")
-}
-
-type Timing struct {
-	Id                   string
-	Name                 string
-	DurationMilliseconds float64
-	StartMilliseconds    float64
-	Children             []*Timing
-	CustomTimings        map[string][]*CustomTiming
-
-	parent *Timing
 }
 
 type CustomTiming struct {
