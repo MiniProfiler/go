@@ -266,12 +266,12 @@ func (p *Profile) Includes(r *http.Request) template.HTML {
 }
 
 type Handler struct {
-	f func(*Profile, http.ResponseWriter, *http.Request)
+	f func(Timer, http.ResponseWriter, *http.Request)
 	p *Profile
 }
 
 // NewHandler returns a new profiled handler.
-func NewHandler(f func(*Profile, http.ResponseWriter, *http.Request)) Handler {
+func NewHandler(f func(Timer, http.ResponseWriter, *http.Request)) Handler {
 	return Handler{
 		f: f,
 	}

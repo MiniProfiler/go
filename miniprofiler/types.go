@@ -19,8 +19,8 @@ package miniprofiler
 import (
 	"code.google.com/p/tcgl/identifier"
 	"encoding/json"
-	"fmt"
 	"html"
+	"html/template"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -63,21 +63,21 @@ type Timing struct {
 // For use only by miniprofiler extensions.
 func NewProfile(w http.ResponseWriter, r *http.Request, name string) *Profile {
 	p := &Profile{
-		CustomLinks: make(map[string]string),
-		w:           w,
-		r:           r,
+		w: w,
+		r: r,
 	}
 
 	if Enable(r) {
 		p.Id = newGuid()
 		p.Name = name
+		p.CustomLinks = make(map[string]string)
 		p.start = time.Now()
 		p.MachineName = MachineName()
 		p.Root = &Timing{
-			Id: newGuid(),
+			Id:      newGuid(),
+			profile: p,
 		}
-
-		w.Header().Add("X-MiniProfiler-Ids", fmt.Sprintf("[\"%s\"]", p.Id))
+		w.Header().Add("X-MiniProfiler-Ids", "[\""+p.Id+"\"]")
 	}
 
 	return p
@@ -121,7 +121,60 @@ func (p *Profile) Json() []byte {
 	return b
 }
 
-func (T *Timing) Step(name string, f func(t *Timing)) {
+type Timer interface {
+	AddCustomTiming(callType, executeType string, start, duration float64, command string)
+	Step(name string, f func(t Timer))
+	AddCustomLink(name, URL string)
+	SetName(string)
+	Includes(r *http.Request) template.HTML
+}
+
+func (p *Profile) SetName(name string) {
+	if p.Root != nil {
+		p.Name = name
+	}
+}
+
+func (T *Timing) SetName(name string) {
+	if T != nil {
+		T.profile.SetName(name)
+	}
+}
+
+func (p *Profile) AddCustomLink(name, URL string) {
+	if p.CustomLinks != nil {
+		p.CustomLinks[name] = URL
+	}
+}
+
+func (T *Timing) AddCustomLink(name, URL string) {
+	if T != nil {
+		T.profile.AddCustomLink(name, URL)
+	}
+}
+
+func (p *Profile) AddCustomTiming(callType, executeType string, start, duration float64, command string) {
+	if p.Root != nil {
+		p.Root.AddCustomTiming(callType, executeType, start, duration, command)
+	}
+}
+
+func (p *Profile) Step(name string, f func(t Timer)) {
+	if p.Root != nil {
+		p.Root.Step(name, f)
+	} else {
+		f(nil)
+	}
+}
+
+func (T *Timing) Includes(r *http.Request) template.HTML {
+	if T != nil {
+		return T.profile.Includes(r)
+	}
+	return ""
+}
+
+func (T *Timing) Step(name string, f func(t Timer)) {
 	if T != nil {
 		t := &Timing{
 			Id:                newGuid(),

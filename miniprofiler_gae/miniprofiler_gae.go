@@ -80,7 +80,7 @@ func GetMemcache(r *http.Request, id string) *miniprofiler.Profile {
 
 type Context struct {
 	appstats.Context
-	*miniprofiler.Timing
+	miniprofiler.Timer
 }
 
 func (c Context) Call(service, method string, in, out appengine_internal.ProtoMessage, opts *appengine_internal.CallOptions) error {
@@ -99,17 +99,14 @@ func (c Context) Call(service, method string, in, out appengine_internal.ProtoMe
 // NewHandler returns a profiled, appstats-aware appengine.Context.
 func NewHandler(f func(Context, http.ResponseWriter, *http.Request)) appstats.Handler {
 	return appstats.NewHandler(func(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-		h := miniprofiler.NewHandler(func(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) {
+		h := miniprofiler.NewHandler(func(t miniprofiler.Timer, w http.ResponseWriter, r *http.Request) {
 			pc := Context{
 				Context: c.(appstats.Context),
-				Timing: p.Root,
+				Timer:   t,
 			}
-			p.Name = miniprofiler.FuncName(f)
+			t.SetName(miniprofiler.FuncName(f))
 			f(pc, w, r)
-
-			if p.Root != nil {
-				p.CustomLinks["appstats"] = pc.URL()
-			}
+			t.AddCustomLink("appstats", pc.URL())
 		})
 		h.ServeHTTP(w, r)
 	})
