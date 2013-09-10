@@ -17,14 +17,15 @@
 package miniprofiler_gae
 
 import (
+	"fmt"
+	"net/http"
+
 	"appengine"
 	"appengine/memcache"
 	"appengine/user"
 	"appengine_internal"
-	"fmt"
 	"github.com/MiniProfiler/go/miniprofiler"
 	"github.com/mjibson/appstats"
-	"net/http"
 )
 
 func init() {
@@ -94,6 +95,15 @@ func (c Context) Call(service, method string, in, out appengine_internal.ProtoMe
 		)
 	}
 	return err
+}
+
+func (c Context) Step(name string, f func(Context)) {
+	c.Timer.Step(name, func(t miniprofiler.Timer) {
+		f(Context{
+			Context: c.Context,
+			Timer:   t,
+		})
+	})
 }
 
 // NewHandler returns a profiled, appstats-aware appengine.Context.
