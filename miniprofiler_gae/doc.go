@@ -26,7 +26,7 @@ To use this package, change your HTTP handler functions to use this signature:
 
 Register them in the usual way, wrapping them with NewHandler.
 
-Send output of p.Includes(r) to your HTML (it is empty if Enable returns
+Send output of c.Includes(r) to your HTML (it is empty if Enable returns
 false).
 
 By default, miniprofiler is enabled on dev for all and on prod for admins.
@@ -37,13 +37,15 @@ Step
 The Step function can be used to profile more specific parts of your code. It
 should be called with the name of the step and a closure:
 
-    c.Step("something", func() {
-        // do some work
+    c.Step("something", func(c mpg.Context) {
+        // c is valid appengine.Context and miniprofiler.Timer:
+        // datastore.Get(c, key, entity)
+        // c.Step("another", func(c mpg.Context) { ... })
     })
 
 Configuration
 
-Refer to the variables section of the documentation: http://godoc.org/github.com/MiniProfiler/go/miniprofiler#_variables.
+Refer to the variables section of the documentation: http://godoc.org/github.com/MiniProfiler/go/miniprofiler#pkg-variables.
 
 Also refer to the base miniprofiler docs: http://godoc.org/github.com/MiniProfiler/go/miniprofiler.
 

@@ -19,7 +19,7 @@ Package miniprofiler is a simple but effective mini-profiler for websites.
 
 To use this package, change your HTTP handler functions to use this signature:
 
-    func(*miniprofiler.Profile, http.ResponseWriter, *http.Request)
+    func(miniprofiler.Timer, http.ResponseWriter, *http.Request)
 
 Register them in the usual way, wrapping them with NewHandler.
 
@@ -36,23 +36,25 @@ Set miniprofiler.Enable to a function that returns true if profiling is enabled:
 Set miniprofiler.Store and miniprofiler.Get to functions that can get and store
 Profile data, perhaps in memory, redis, or a database. Get key is Profile.Id.
 
-Send output of p.Includes(r) to your HTML (it is empty if Enable returns
+Send output of t.Includes(r) to your HTML (it is empty if Enable returns
 false).
 
 Step
 
 The Step function can be used to profile more specific parts of your code. It
-should be called with the name of the step and a closure:
+should be called with the name of the step and a closure. Further Timers are
+used so concurrent work can be done and results applied to the correct location.
 
-    p.Step("something", func() {
+    t.Step("something", func(t miniprofiler.Timer) {
         // do some work
+        // t.Step("another", func(t miniprofiler.Timer) { ... })
     })
 
 AddCustomTiming
 
 AddCustomTiming can be used to record any kind of call (redis, RPC, etc.)
 
-    p.AddCustomTiming(
+    t.AddCustomTiming(
         "redis",       // call type
         "get",         // execute type
         1.0,           // start milliseconds
@@ -62,7 +64,7 @@ AddCustomTiming can be used to record any kind of call (redis, RPC, etc.)
 
 Example
 
-This is a small example using this package.
+This is a small example using this package. Note it is not thread safe.
 
     package main
 
@@ -70,8 +72,8 @@ This is a small example using this package.
     import "github.com/mjibson/MiniProfiler/go/miniprofiler"
     import "net/http"
 
-    func Index(p *miniprofiler.Profile, w http.ResponseWriter, r *http.Request) {
-        p.Step("something", func() {
+    func Index(t miniprofiler.Timer, w http.ResponseWriter, r *http.Request) {
+        t.Step("something", func(t miniprofiler.Timer) {
             p.AddCustomTiming("RPC", "get", 1.0, 5.2, "get key_name")
         })
         fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes(r))
