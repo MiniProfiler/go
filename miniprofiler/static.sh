@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cd ../html
+cd ../ui
 bin2go -a -p miniprofiler -s ../miniprofiler/static.go *
