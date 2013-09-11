@@ -86,7 +86,7 @@ type Context struct {
 
 func (c Context) Call(service, method string, in, out appengine_internal.ProtoMessage, opts *appengine_internal.CallOptions) error {
 	err := c.Context.Call(service, method, in, out, opts)
-	if service != "__go__" {
+	if c.Timer != nil && service != "__go__" {
 		v := c.Context.Stats.RPCStats[len(c.Context.Stats.RPCStats)-1]
 		c.AddCustomTiming(service, method,
 			float64(v.Offset.Nanoseconds())/1000000,
@@ -98,12 +98,16 @@ func (c Context) Call(service, method string, in, out appengine_internal.ProtoMe
 }
 
 func (c Context) Step(name string, f func(Context)) {
-	c.Timer.Step(name, func(t miniprofiler.Timer) {
-		f(Context{
-			Context: c.Context,
-			Timer:   t,
+	if c.Timer != nil {
+		c.Timer.Step(name, func(t miniprofiler.Timer) {
+			f(Context{
+				Context: c.Context,
+				Timer:   t,
+			})
 		})
-	})
+	} else {
+		f(c)
+	}
 }
 
 // NewHandler returns a profiled, appstats-aware appengine.Context.
