@@ -84,17 +84,13 @@ type Context struct {
 	miniprofiler.Timer
 }
 
-func (c Context) Call(service, method string, in, out appengine_internal.ProtoMessage, opts *appengine_internal.CallOptions) error {
-	err := c.Context.Call(service, method, in, out, opts)
+func (c Context) Call(service, method string, in, out appengine_internal.ProtoMessage, opts *appengine_internal.CallOptions) (err error) {
 	if c.Timer != nil && service != "__go__" {
-		v := c.Context.Stats.RPCStats[len(c.Context.Stats.RPCStats)-1]
-		c.AddCustomTiming(service, method,
-			float64(v.Offset.Nanoseconds())/1000000,
-			float64(v.Duration.Nanoseconds())/1000000,
-			fmt.Sprintf("%v\n\n%v", method, v.Request()),
-		)
+		c.StepCustomTiming(service, method, fmt.Sprintf("%v\n\n%v", method, in.String()), func() {
+			err = c.Context.Call(service, method, in, out, opts)
+		})
 	}
-	return err
+	return
 }
 
 func (c Context) Step(name string, f func(Context)) {

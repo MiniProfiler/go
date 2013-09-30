@@ -17,7 +17,6 @@
 package miniprofiler
 
 import (
-	"code.google.com/p/tcgl/identifier"
 	"encoding/json"
 	"html"
 	"html/template"
@@ -26,6 +25,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"code.google.com/p/tcgl/identifier"
 )
 
 func newGuid() string {
@@ -122,8 +123,9 @@ func (p *Profile) Json() []byte {
 }
 
 type Timer interface {
-	AddCustomTiming(callType, executeType string, start, duration float64, command string)
+	AddCustomTiming(callType, executeType string, start, end time.Time, command string)
 	Step(name string, f func(t Timer))
+	StepCustomTiming(callType, executeType string, command string, f func())
 	AddCustomLink(name, URL string)
 	SetName(string)
 	Includes(r *http.Request) template.HTML
@@ -153,9 +155,17 @@ func (T *Timing) AddCustomLink(name, URL string) {
 	}
 }
 
-func (p *Profile) AddCustomTiming(callType, executeType string, start, duration float64, command string) {
+func (p *Profile) AddCustomTiming(callType, executeType string, start, end time.Time, command string) {
 	if p.Root != nil {
-		p.Root.AddCustomTiming(callType, executeType, start, duration, command)
+		p.Root.AddCustomTiming(callType, executeType, start, end, command)
+	}
+}
+
+func (p *Profile) StepCustomTiming(callType, executeType string, command string, f func()) {
+	if p.Root != nil {
+		p.Root.StepCustomTiming(callType, executeType, command, f)
+	} else {
+		f()
 	}
 }
 
@@ -196,21 +206,35 @@ func (T *Timing) addChild(t *Timing) {
 	T.Unlock()
 }
 
-func (t *Timing) AddCustomTiming(callType, executeType string, start, duration float64, command string) {
+func (t *Timing) AddCustomTiming(callType, executeType string, start, end time.Time, command string) {
+	if t == nil {
+		return
+	}
 	t.Lock()
 	if t.CustomTimings == nil {
 		t.CustomTimings = make(map[string][]*CustomTiming)
 	}
 	s := &CustomTiming{
 		Id:                   newGuid(),
-		StartMilliseconds:    start,
-		DurationMilliseconds: duration,
+		StartMilliseconds:    start.Sub(t.profile.start).Seconds() * 1000,
+		DurationMilliseconds: end.Sub(start).Seconds() * 1000,
 		CommandString:        html.EscapeString(command),
 		StackTraceSnippet:    getStackSnippet(),
 		ExecuteType:          executeType,
 	}
 	t.CustomTimings[callType] = append(t.CustomTimings[callType], s)
 	t.Unlock()
+}
+
+func (t *Timing) StepCustomTiming(callType, executeType string, command string, f func()) {
+	if t == nil {
+		f()
+		return
+	}
+	start := time.Now()
+	f()
+	end := time.Now()
+	t.AddCustomTiming(callType, executeType, start, end, command)
 }
 
 func getStackSnippet() string {
