@@ -89,6 +89,8 @@ func (c Context) Call(service, method string, in, out appengine_internal.ProtoMe
 		c.StepCustomTiming(service, method, fmt.Sprintf("%v\n\n%v", method, in.String()), func() {
 			err = c.Context.Call(service, method, in, out, opts)
 		})
+	} else {
+		err = c.Context.Call(service, method, in, out, opts)
 	}
 	return
 }
