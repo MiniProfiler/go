@@ -19,22 +19,22 @@ Package miniprofiler is a simple but effective mini-profiler for websites.
 
 To use this package, change your HTTP handler functions to use this signature:
 
-    func(miniprofiler.Timer, http.ResponseWriter, *http.Request)
+	func(miniprofiler.Timer, http.ResponseWriter, *http.Request)
 
 Register them in the usual way, wrapping them with NewHandler.
 
-Set miniprofiler.Enable to a function that returns true if profiling is enabled:
+By default, all requests are profiled. This should be changed to profile
+only developer requests. Set miniprofiler.Enable to a function that returns
+true if profiling is enabled. It might resemble this:
 
-    miniprofiler.Enable = func(r *http.Request) bool {
-        // Filter on the request, perhaps like:
-        // return isUserAuthenticated(r)
+	miniprofiler.Enable = func(r *http.Request) bool {
+		return isUserAuthenticated(r)
+	}
 
-        // For now, always enable:
-        return true
-    }
-
-Set miniprofiler.Store and miniprofiler.Get to functions that can get and store
-Profile data, perhaps in memory, redis, or a database. Get key is Profile.Id.
+By default, profile results are stored in memory in a concurrent-safe
+data structure. To store in redis, memcache, or something else, set
+miniprofiler.Store and miniprofiler.Get to functions to back the profile
+data. The key is Profile.Id.
 
 Send output of t.Includes(r) to your HTML (it is empty if Enable returns
 false).
@@ -45,52 +45,47 @@ The Step function can be used to profile more specific parts of your code. It
 should be called with the name of the step and a closure. Further Timers are
 used so concurrent work can be done and results applied to the correct location.
 
-    t.Step("something", func(t miniprofiler.Timer) {
-        // do some work
-        // t.Step("another", func(t miniprofiler.Timer) { ... })
-    })
+	t.Step("something", func(t miniprofiler.Timer) {
+		// do some work
+		// t.Step("another", func(t miniprofiler.Timer) { ... })
+	})
 
-AddCustomTiming
+StepCustomTiming
 
-AddCustomTiming can be used to record any kind of call (redis, RPC, etc.)
+StepCustomTiming can be used to record any kind of call (redis, RPC, etc.)
 
-    t.AddCustomTiming(
-        "redis",       // call type
-        "get",         // execute type
-        1.0,           // start milliseconds
-        5.2,           // duration milliseconds
-        "get key_name" // command string
-    )
+	t.StepCustomTiming(
+		"redis",	   // call type
+		"get",		 // execute type
+		"get key_name" // command string
+		func() {
+		// do work
+		}
+	)
 
 Example
 
-This is a small example using this package. Note it is not thread safe.
+This is a small example using this package.
 
-    package main
+	package main
 
-    import "fmt"
-    import "github.com/mjibson/MiniProfiler/go/miniprofiler"
-    import "net/http"
+	import "fmt"
+	import "github.com/mjibson/MiniProfiler/go/miniprofiler"
+	import "net/http"
 
-    func Index(t miniprofiler.Timer, w http.ResponseWriter, r *http.Request) {
-        t.Step("something", func(t miniprofiler.Timer) {
-            p.AddCustomTiming("RPC", "get", 1.0, 5.2, "get key_name")
-        })
-        fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes(r))
-    }
+	func Index(t miniprofiler.Timer, w http.ResponseWriter, r *http.Request) {
+		t.Step("something", func(t miniprofiler.Timer) {
+			t.StepCustomTiming("RPC", "get", "get key_name", func() {
+				// some RPC call
+			})
+		})
+		fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes(r))
+	}
 
-    func main() {
-        profiles := make(map[string]*miniprofiler.Profile)
-        miniprofiler.Enable = func(r *http.Request) bool { return true }
-        miniprofiler.Store = func(r *http.Request, p *miniprofiler.Profile) {
-            profiles[string(p.Id)] = p
-        }
-        miniprofiler.Get = func(r *http.Request, id string) *miniprofiler.Profile {
-            return profiles[id]
-        }
-        http.Handle("/", miniprofiler.NewHandler(Index))
-        http.ListenAndServe(":8080", nil)
-    }
+	func main() {
+		http.Handle("/", miniprofiler.NewHandler(Index))
+		http.ListenAndServe(":8080", nil)
+	}
 
 Configuration
 

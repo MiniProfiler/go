@@ -28,19 +28,20 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 )
 
 var (
 	// Enable returns true if the request should be profiled.
-	Enable func(*http.Request) bool
+	Enable func(*http.Request) bool = EnableAll
 
 	// Store stores the Profile by its Id field.
-	Store func(*http.Request, *Profile)
+	Store func(*http.Request, *Profile) = StoreMemory
 
 	// Get retrieves a Profile by its Id field.
-	Get func(*http.Request, string) *Profile
+	Get func(*http.Request, string) *Profile = GetMemory
 
 	// MachineName returns the machine name to display.
 	// The default is to use the machine's hostname.
@@ -319,4 +320,28 @@ func FuncName(f interface{}) string {
 		return fn.Name()
 	}
 	return ""
+}
+
+// EnableAll returns true.
+func EnableAll(r *http.Request) bool {
+	return true
+}
+
+var profiles map[string]*Profile
+var profileLock sync.Mutex
+
+func init() {
+	profiles = make(map[string]*Profile)
+}
+
+func StoreMemory(r *http.Request, p *Profile) {
+	profileLock.Lock()
+	defer profileLock.Unlock()
+	profiles[string(p.Id)] = p
+}
+
+func GetMemory(r *http.Request, id string) *Profile {
+	profileLock.Lock()
+	defer profileLock.Unlock()
+	return profiles[id]
 }
