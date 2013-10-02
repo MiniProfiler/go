@@ -43,31 +43,66 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-type Conn struct {
+type Conn interface {
+	redis.Conn
+	DoTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (reply interface{}, err error)
+	SendTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (err error)
+}
+
+type conn struct {
 	redis.Conn
 }
 
-func Dial(network, address string) (*Conn, error) {
-	conn, err := redis.Dial(network, address)
-	c := &Conn{conn}
-	return c, err
+func Dial(network, address string) (Conn, error) {
+	c, err := redis.Dial(network, address)
+	return &conn{c}, err
 }
 
-func (c Conn) DoTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (reply interface{}, err error) {
+func (c *conn) DoTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (reply interface{}, err error) {
 	t.StepCustomTiming("redis", "do", format(commandName, args...), func() {
 		reply, err = c.Conn.Do(commandName, args...)
 	})
 	return
 }
 
-func (c Conn) SendTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (err error) {
+func (c *conn) SendTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (err error) {
 	t.StepCustomTiming("redis", "send", format(commandName, args...), func() {
 		err = c.Conn.Send(commandName, args...)
 	})
 	return
 }
 
+type Pool struct {
+	*redis.Pool
+}
+
+func NewPool(newFn func() (Conn, error), maxIdle int) *Pool {
+	fn := func() (redis.Conn, error) {
+		return newFn()
+	}
+	return &Pool{redis.NewPool(fn, maxIdle)}
+}
+
+func (p *Pool) Get() Conn {
+	c := p.Pool.Get()
+	return &conn{c}
+}
+
 func format(commandName string, args ...interface{}) string {
 	f := strings.Repeat(` "%v"`, len(args))
 	return commandName + fmt.Sprintf(f, args...)
 }
+
+var Bool = redis.Bool
+var Bytes = redis.Bytes
+var Float64 = redis.Float64
+var Int = redis.Int
+var Int64 = redis.Int64
+var MultiBulk = redis.MultiBulk
+var Scan = redis.Scan
+var ScanStruct = redis.ScanStruct
+var String = redis.String
+var Strings = redis.Strings
+var Values = redis.Values
+
+type Args struct{ redis.Args }
