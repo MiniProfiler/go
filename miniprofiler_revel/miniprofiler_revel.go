@@ -36,6 +36,7 @@ var Filter = func(c *revel.Controller, fc []revel.Filter) {
 	}
 	fc[0](c, fc[1:])
 	if ok {
+		p.SetName(c.Action)
 		p.Finalize()
 	}
 }
