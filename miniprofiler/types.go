@@ -125,7 +125,7 @@ func (p *Profile) Json() []byte {
 type Timer interface {
 	AddCustomTiming(callType, executeType string, start, end time.Time, command string)
 	Step(name string, f func(t Timer))
-	StepCustomTiming(callType, executeType string, command string, f func())
+	StepCustomTiming(callType, executeType, command string, f func())
 	AddCustomLink(name, URL string)
 	SetName(string)
 	Includes(r *http.Request) template.HTML
@@ -161,7 +161,7 @@ func (p *Profile) AddCustomTiming(callType, executeType string, start, end time.
 	}
 }
 
-func (p *Profile) StepCustomTiming(callType, executeType string, command string, f func()) {
+func (p *Profile) StepCustomTiming(callType, executeType, command string, f func()) {
 	if p.Root != nil {
 		p.Root.StepCustomTiming(callType, executeType, command, f)
 	} else {
@@ -226,7 +226,7 @@ func (t *Timing) AddCustomTiming(callType, executeType string, start, end time.T
 	t.Unlock()
 }
 
-func (t *Timing) StepCustomTiming(callType, executeType string, command string, f func()) {
+func (t *Timing) StepCustomTiming(callType, executeType, command string, f func()) {
 	if t == nil {
 		f()
 		return
