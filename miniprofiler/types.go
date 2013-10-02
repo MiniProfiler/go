@@ -173,7 +173,7 @@ func (p *Profile) Step(name string, f func(t Timer)) {
 	if p.Root != nil {
 		p.Root.Step(name, f)
 	} else {
-		f(nil)
+		f(p)
 	}
 }
 
@@ -185,19 +185,15 @@ func (T *Timing) Includes(r *http.Request) template.HTML {
 }
 
 func (T *Timing) Step(name string, f func(t Timer)) {
-	if T != nil {
-		t := &Timing{
-			Id:                newGuid(),
-			Name:              name,
-			StartMilliseconds: Since(T.profile.start),
-			profile:           T.profile,
-		}
-		T.addChild(t)
-		f(t)
-		t.DurationMilliseconds = Since(t.profile.start) - t.StartMilliseconds
-	} else {
-		f(nil)
+	t := &Timing{
+		Id:                newGuid(),
+		Name:              name,
+		StartMilliseconds: Since(T.profile.start),
+		profile:           T.profile,
 	}
+	T.addChild(t)
+	f(t)
+	t.DurationMilliseconds = Since(t.profile.start) - t.StartMilliseconds
 }
 
 func (T *Timing) addChild(t *Timing) {
