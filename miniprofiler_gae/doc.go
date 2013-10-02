@@ -29,13 +29,12 @@ Register them in the usual way, wrapping them with NewHandler.
 Send output of c.Includes(r) to your HTML (it is empty if Enable returns
 false).
 
-By default, miniprofiler is enabled on dev for all and on prod for admins.
+By default, miniprofiler_gae is enabled on dev for all and on prod for admins.
 Override miniprofiler.Enable to change.
 
 Step
 
-The Step function can be used to profile more specific parts of your code. It
-should be called with the name of the step and a closure:
+Unlike base miniprofiler, the Step function returns a profiled context:
 
     c.Step("something", func(c mpg.Context) {
         // c is valid appengine.Context and miniprofiler.Timer:
@@ -43,12 +42,6 @@ should be called with the name of the step and a closure:
         // c.Step("another", func(c mpg.Context) { ... })
     })
 
-Configuration
-
-Refer to the variables section of the documentation: http://godoc.org/github.com/MiniProfiler/go/miniprofiler#pkg-variables.
-
-Also refer to the base miniprofiler docs: http://godoc.org/github.com/MiniProfiler/go/miniprofiler.
-
-Other implementations and resources: http://miniprofiler.com.
+See the miniprofiler package docs about further usage: http://godoc.org/github.com/MiniProfiler/go/miniprofiler.
 */
 package miniprofiler_gae
