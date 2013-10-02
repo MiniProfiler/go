@@ -68,7 +68,7 @@ const (
 )
 
 func init() {
-	http.HandleFunc(PATH, miniProfilerHandler)
+	http.HandleFunc(PATH, MiniProfilerHandler)
 
 	staticFiles = map[string][]byte{
 		"includes.css":    includes_css,
@@ -79,7 +79,9 @@ func init() {
 	}
 }
 
-func miniProfilerHandler(w http.ResponseWriter, r *http.Request) {
+// MiniProfilerHandler serves requests to the /mini-profiler-resources/
+// path. For use only by miniprofiler helper libraries.
+func MiniProfilerHandler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
 	if staticFiles[path] != nil {
 		static(w, r)
