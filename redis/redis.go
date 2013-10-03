@@ -106,3 +106,9 @@ var Strings = redis.Strings
 var Values = redis.Values
 
 type Args struct{ redis.Args }
+type Error struct{ redis.Error }
+type Message struct{ redis.Message }
+type PMessage struct{ redis.PMessage }
+type PubSubConn struct{ redis.PubSubConn }
+type Script struct{ redis.Script }
+type Subscription struct{ redis.Subscription }

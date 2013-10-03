@@ -72,3 +72,19 @@ func (d DB) QueryRowTimer(t miniprofiler.Timer, query string, args ...interface{
 	})
 	return
 }
+
+var ErrNoRows = sql.ErrNoRows
+var ErrTxDone = sql.ErrTxDone
+var Register = sql.Register
+
+type NullBool struct{ sql.NullBool }
+type NullFloat64 struct{ sql.NullFloat64 }
+type NullInt64 struct{ sql.NullInt64 }
+type NullString struct{ sql.NullString }
+type RawBytes struct{ sql.RawBytes }
+type Result struct{ sql.Result }
+type Row struct{ sql.Row }
+type Rows struct{ sql.Rows }
+type Scanner struct{ sql.Scanner }
+type Stmt struct{ sql.Stmt }
+type Tx struct{ sql.Tx }
