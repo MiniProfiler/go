@@ -23,7 +23,7 @@ import (
 	"github.com/robfig/revel"
 )
 
-var Filter = func(c *revel.Controller, fc []revel.Filter) {
+func Filter(c *revel.Controller, fc []revel.Filter) {
 	ok := miniprofiler.Enable(c.Request.Request)
 	if ok && strings.HasPrefix(c.Request.Request.URL.Path, miniprofiler.PATH) {
 		miniprofiler.MiniProfilerHandler(c.Response.Out, c.Request.Request)
