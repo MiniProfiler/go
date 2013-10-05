@@ -223,10 +223,6 @@ func (t *Timing) AddCustomTiming(callType, executeType string, start, end time.T
 }
 
 func (t *Timing) StepCustomTiming(callType, executeType, command string, f func()) {
-	if t == nil {
-		f()
-		return
-	}
 	start := time.Now()
 	f()
 	end := time.Now()
