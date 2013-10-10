@@ -75,8 +75,6 @@ func init() {
 		"includes.css":    includes_css,
 		"includes.js":     includes_js,
 		"includes.tmpl":   includes_tmpl,
-		"jquery.1.7.1.js": jquery_1_7_1_js,
-		"underscore.js":   underscore_js,
 	}
 }
 
