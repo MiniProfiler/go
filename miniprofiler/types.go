@@ -18,19 +18,21 @@ package miniprofiler
 
 import (
 	"encoding/json"
+	"fmt"
 	"html"
 	"html/template"
+	"math/rand"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
-
-	"code.google.com/p/tcgl/identifier"
 )
 
+var rnd = rand.NewSource(time.Now().UnixNano())
+
 func newGuid() string {
-	return identifier.NewUUID().String()
+	return fmt.Sprintf("%016x", rnd.Int63())
 }
 
 type Profile struct {
