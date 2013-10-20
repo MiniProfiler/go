@@ -89,7 +89,7 @@ This is a small example using this package.
 
 Configuration
 
-Refer to the variables section of the documentation: http://godoc.org/github.com/mjibson/MiniProfiler/go/miniprofiler#_variables.
+Refer to the variables section of the documentation: http://godoc.org/github.com/MiniProfiler/go/miniprofiler#pkg-variables.
 
 Other implementations and resources: http://miniprofiler.com.
 */
