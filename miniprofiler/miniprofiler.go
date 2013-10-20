@@ -334,12 +334,16 @@ func init() {
 	profiles = make(map[string]*Profile)
 }
 
+// StoreMemory stores a profile in memory (concurrent-safe). Note that profiles
+// do not expire, so memory usage will increase until restart. This function is
+// provided as an example: it is not designed for production use.
 func StoreMemory(r *http.Request, p *Profile) {
 	profileLock.Lock()
 	defer profileLock.Unlock()
 	profiles[string(p.Id)] = p
 }
 
+// GetMemory fetches a profile stored by StoreMemory (concurrent-safe).
 func GetMemory(r *http.Request, id string) *Profile {
 	profileLock.Lock()
 	defer profileLock.Unlock()
