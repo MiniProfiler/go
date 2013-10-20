@@ -47,7 +47,9 @@ var (
 	// The default is to use the machine's hostname.
 	MachineName func() string = Hostname
 
-	Position            = "left"
+	// Valid positions: left, right, bottomleft, bottomright
+	Position = "left"
+
 	ShowTrivial         = false
 	ShowChildren        = false
 	MaxTracesToShow     = 15
