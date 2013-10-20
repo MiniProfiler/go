@@ -22,6 +22,8 @@ functions. To use, replace the database/sql import with this package. Modify
 calls to Exec, Query, and QueryRow to their *Timer variants. Pass the
 miniprofiler.Timer reference as first argument.
 
+NOTE: this API is experimental and may change.
+
 Example
 
 This is a small example using this package.
