@@ -55,11 +55,11 @@ StepCustomTiming
 StepCustomTiming can be used to record any kind of call (redis, RPC, etc.)
 
 	t.StepCustomTiming(
-		"redis",	   // call type
-		"get",		 // execute type
+		"redis",       // call type
+		"get",         // execute type
 		"get key_name" // command string
 		func() {
-		// do work
+			// do work
 		}
 	)
 
