@@ -92,5 +92,17 @@ Configuration
 Refer to the variables section of the documentation: http://godoc.org/github.com/MiniProfiler/go/miniprofiler#pkg-variables.
 
 Other implementations and resources: http://miniprofiler.com.
+
+Extensions
+
+Hooks for various APIs and frameworks exist.
+
+Google App Engine: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_gae
+
+Revel: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_revel
+
+Redis: http://godoc.org/github.com/MiniProfiler/go/redis
+
+SQL: http://godoc.org/github.com/MiniProfiler/go/sql
 */
 package miniprofiler
