@@ -74,9 +74,9 @@ func init() {
 	http.HandleFunc(PATH, MiniProfilerHandler)
 
 	staticFiles = map[string][]byte{
-		"includes.css":  includes_css,
-		"includes.js":   includes_js,
-		"includes.tmpl": includes_tmpl,
+		"includes.css":  includesCss,
+		"includes.js":   includesJs,
+		"includes.tmpl": includesTmpl,
 	}
 }
 
@@ -134,7 +134,7 @@ func results(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Add("Content-Type", "text/html")
-		shareHtml.Execute(w, v)
+		shareHtmlTmpl.Execute(w, v)
 	}
 }
 
@@ -261,7 +261,7 @@ func (p *Profile) Includes(r *http.Request) template.HTML {
 	}
 
 	var w bytes.Buffer
-	if err := includesTmpl.Execute(&w, v); err != nil {
+	if err := includePartialHtmlTmpl.Execute(&w, v); err != nil {
 		log.Print(err)
 		return ""
 	}
