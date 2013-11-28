@@ -33,7 +33,7 @@ This is a small example using this package.
 		db.ExecTimer(t, "create table x(a, b, c)")
 		db.ExecTimer(t, "insert into x (1, 2, 4), (3, 5, 6)")
 		db.QueryTimer(t, "select * from x")
-		fmt.Fprintf(w, `<html><body>%v</body></html>`, t.Includes(r))
+		fmt.Fprintf(w, `<html><body>%v</body></html>`, t.Includes())
 	}
 */
 package sql

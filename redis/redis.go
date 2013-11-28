@@ -32,7 +32,7 @@ This is a small example using this package.
 		conn, _ := redis.Dial("tcp", ":6379")
 		defer conn.Close()
 		conn.DoTimer(t, "set", "test", "value")
-		fmt.Fprintf(w, `<html><body>%v</body></html>`, t.Includes(r))
+		fmt.Fprintf(w, `<html><body>%v</body></html>`, t.Includes())
 	}
 */
 package redis

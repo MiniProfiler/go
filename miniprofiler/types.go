@@ -130,7 +130,7 @@ type Timer interface {
 	StepCustomTiming(callType, executeType, command string, f func())
 	AddCustomLink(name, URL string)
 	SetName(string)
-	Includes(r *http.Request) template.HTML
+	Includes() template.HTML
 }
 
 func (p *Profile) SetName(name string) {
@@ -179,9 +179,9 @@ func (p *Profile) Step(name string, f func(t Timer)) {
 	}
 }
 
-func (T *Timing) Includes(r *http.Request) template.HTML {
+func (T *Timing) Includes() template.HTML {
 	if T != nil {
-		return T.profile.Includes(r)
+		return T.profile.Includes()
 	}
 	return ""
 }

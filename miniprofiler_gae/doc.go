@@ -26,7 +26,7 @@ To use this package, change your HTTP handler functions to use this signature:
 
 Register them in the usual way, wrapping them with NewHandler.
 
-Send output of c.Includes(r) to your HTML (it is empty if Enable returns
+Send output of c.Includes() to your HTML (it is empty if Enable returns
 false).
 
 By default, miniprofiler_gae is enabled on dev for all and on prod for admins.

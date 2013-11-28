@@ -36,7 +36,7 @@ data structure. To store in redis, memcache, or something else, set
 miniprofiler.Store and miniprofiler.Get to functions to back the profile
 data. The key is Profile.Id.
 
-Send output of t.Includes(r) to your HTML (it is empty if Enable returns
+Send output of t.Includes() to your HTML (it is empty if Enable returns
 false).
 
 Step
@@ -79,7 +79,7 @@ This is a small example using this package.
 				// some RPC call
 			})
 		})
-		fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes(r))
+		fmt.Fprintf(w, "<html><body>%v</body></html>", p.Includes())
 	}
 
 	func main() {

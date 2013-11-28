@@ -32,7 +32,7 @@ func Filter(c *revel.Controller, fc []revel.Filter) {
 	p := miniprofiler.NewProfile(c.Response.Out, c.Request.Request, c.Action)
 	c.Args["miniprofiler"] = p
 	if ok {
-		c.RenderArgs["miniprofiler"] = p.Includes(c.Request.Request)
+		c.RenderArgs["miniprofiler"] = p.Includes()
 	}
 	fc[0](c, fc[1:])
 	if ok {

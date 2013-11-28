@@ -25,7 +25,7 @@ Add the middleware:
 
 	m.Use(mmp.Profiler())
 
-Now a mmp.Timer object is available via the injector. Call .Includes(r) like
+Now a mmp.Timer object is available via the injector. Call p.Includes() like
 normal and add it to your template.
 
 Example
@@ -34,7 +34,7 @@ Example
 		m := martini.Classic()
 		m.Use(mmp.Profiler())
 		m.Get("/", func(p mmp.Timer, r *http.Request) string {
-			return fmt.Sprintf("<html><body>%v</body></html>", p.Includes(r))
+			return fmt.Sprintf("<html><body>%v</body></html>", p.Includes())
 		})
 		m.Run()
 	}

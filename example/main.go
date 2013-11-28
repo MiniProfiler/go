@@ -21,7 +21,7 @@ func Index(t miniprofiler.Timer, w http.ResponseWriter, r *http.Request) {
 		conn.DoTimer(t, "set", "tes t", "value")
 		conn.SendTimer(t, "get", "test t")
 	})
-	fmt.Fprintf(w, `<html><body>%v</body></html>`, t.Includes(r))
+	fmt.Fprintf(w, `<html><body>%v</body></html>`, t.Includes())
 }
 
 func main() {
