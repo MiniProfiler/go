@@ -93,13 +93,21 @@ Refer to the variables section of the documentation: http://godoc.org/github.com
 
 Other implementations and resources: http://miniprofiler.com.
 
-Extensions
+Frameworks
 
-Hooks for various APIs and frameworks exist.
+Various frameworks have explicit support.
 
 Google App Engine: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_gae
 
 Revel: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_revel
+
+Martini: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_martini
+
+Beego: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_beego
+
+RPCs
+
+Various RPCs have explicit support.
 
 Redis: http://godoc.org/github.com/MiniProfiler/go/redis
 
