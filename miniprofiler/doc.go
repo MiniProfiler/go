@@ -105,6 +105,8 @@ Martini: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_martini
 
 Beego: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_beego
 
+Traffic: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_traffic
+
 RPCs
 
 Various RPCs have explicit support.
