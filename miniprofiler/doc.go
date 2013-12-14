@@ -107,6 +107,8 @@ Beego: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_beego
 
 Traffic: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_traffic
 
+gocraft/web: http://godoc.org/github.com/MiniProfiler/go/miniprofiler_gocraftweb
+
 RPCs
 
 Various RPCs have explicit support.
