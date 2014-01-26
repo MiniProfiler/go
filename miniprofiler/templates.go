@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-var includePartialHtmlTmpl = parseInclude("include", includePartialHtml)
-var shareHtmlTmpl = parseInclude("share", shareHtml)
+var includePartialHtmlTmpl = parseInclude("include", include_partial_html)
+var shareHtmlTmpl = parseInclude("share", share_html)
 
 func parseInclude(name string, t []byte) *template.Template {
 	s := string(t)

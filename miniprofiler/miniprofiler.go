@@ -74,9 +74,9 @@ func init() {
 	http.HandleFunc(PATH, MiniProfilerHandler)
 
 	staticFiles = map[string][]byte{
-		"includes.css":  includesCss,
-		"includes.js":   includesJs,
-		"includes.tmpl": includesTmpl,
+		"includes.css":  includes_css,
+		"includes.js":   includes_js,
+		"includes.tmpl": includes_tmpl,
 	}
 }
 
