@@ -253,8 +253,10 @@ func getStackSnippet() string {
 			snippet = append(snippet, snip)
 		}
 	}
-
-	return strings.Join(snippet[2:], " ")
+	if len(snippet) > 2 {
+		snippet = snippet[2:]
+	}
+	return strings.Join(snippet, " ")
 }
 
 type CustomTiming struct {
