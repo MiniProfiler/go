@@ -27,7 +27,7 @@ Embed mpg.MiniProfilerContext in your context:
 		mpg.MiniProfilerContext
 		...
 	}
-	
+
 Add the (*Context).MiniProfilerMiddleware middleware:
 
 	router := web.New(Context{}).
@@ -45,27 +45,27 @@ Example
 A full example application:
 
 	package main
-	
+
 	import (
 		"fmt"
 		"net/http"
 		"strings"
-	
+
 		"github.com/MiniProfiler/go/miniprofiler"
 		mpg "github.com/MiniProfiler/go/miniprofiler_gocraftweb"
 		"github.com/gocraft/web"
 	)
-	
+
 	type Context struct {
 		mpg.MiniProfilerContext
 		HelloCount int
 	}
-	
+
 	func (c *Context) SetHelloCount(rw web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
 		c.HelloCount = 3
 		next(rw, req)
 	}
-	
+
 	func (c *Context) SayHello(rw web.ResponseWriter, req *web.Request) {
 		c.MiniProfilerTimer.Step("test", func(t miniprofiler.Timer) {
 			fmt.Fprint(rw,
@@ -76,7 +76,7 @@ A full example application:
 				"</body></html>")
 		})
 	}
-	
+
 	func main() {
 		router := web.New(Context{}).
 						Middleware(web.LoggerMiddleware).
