@@ -19,7 +19,6 @@ package miniprofiler
 import (
 	"encoding/json"
 	"fmt"
-	"html"
 	"html/template"
 	"math/rand"
 	"net/http"
@@ -216,7 +215,7 @@ func (t *Timing) AddCustomTiming(callType, executeType string, start, end time.T
 		Id:                   newGuid(),
 		StartMilliseconds:    start.Sub(t.profile.start).Seconds() * 1000,
 		DurationMilliseconds: end.Sub(start).Seconds() * 1000,
-		CommandString:        html.EscapeString(command),
+		CommandString:        command,
 		StackTraceSnippet:    getStackSnippet(),
 		ExecuteType:          executeType,
 	}
