@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/MiniProfiler/go/miniprofiler"
-	"github.com/robfig/revel"
+	"github.com/revel/revel"
 )
 
 func Filter(c *revel.Controller, fc []revel.Filter) {
