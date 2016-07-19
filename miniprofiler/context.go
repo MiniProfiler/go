@@ -7,10 +7,10 @@ import (
 	"net/http"
 )
 
-type ctxKey string
+type ctxKey int
 
 // contextKey can be used to retreive the profiler instance from the request's context
-const contextKey ctxKey = "miniprofiler"
+const contextKey ctxKey = 0
 
 // ContextHandler is an alternate handler that passes the profiler on the http
 // request's context, rather than as function arguments.
