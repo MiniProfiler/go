@@ -26,13 +26,6 @@ func NewContextHandler(f http.HandlerFunc) http.Handler {
 }
 
 func (h ContextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Query().Get("pp") {
-	default:
-		h.profileRequest(w, r)
-	}
-}
-
-func (h ContextHandler) profileRequest(w http.ResponseWriter, r *http.Request) {
 	h.p = NewProfile(w, r, FuncName(h.f))
 	ctx := context.WithValue(r.Context(), contextKey, h.p)
 	h.f(w, r.WithContext(ctx))
