@@ -61,16 +61,26 @@ func Dial(network, address string) (Conn, error) {
 }
 
 func (c *conn) DoTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (reply interface{}, err error) {
-	t.StepCustomTiming("redis", "do", format(commandName, args...), func() {
+	f := func() {
 		reply, err = c.Conn.Do(commandName, args...)
-	})
+	}
+	if t != nil {
+		t.StepCustomTiming("redis", "do", format(commandName, args...), f)
+	} else {
+		f()
+	}
 	return
 }
 
 func (c *conn) SendTimer(t miniprofiler.Timer, commandName string, args ...interface{}) (err error) {
-	t.StepCustomTiming("redis", "send", format(commandName, args...), func() {
+	f := func() {
 		err = c.Conn.Send(commandName, args...)
-	})
+	}
+	if t != nil {
+		t.StepCustomTiming("redis", "send", format(commandName, args...), f)
+	} else {
+		f()
+	}
 	return
 }
 
@@ -96,21 +106,34 @@ func format(commandName string, args ...interface{}) string {
 }
 
 var Bool = redis.Bool
+var ByteSlices = redis.ByteSlices
 var Bytes = redis.Bytes
 var Float64 = redis.Float64
 var Int = redis.Int
 var Int64 = redis.Int64
+var Int64Map = redis.Int64Map
+var IntMap = redis.IntMap
+var Ints = redis.Ints
 var MultiBulk = redis.MultiBulk
 var Scan = redis.Scan
+var ScanSlice = redis.ScanSlice
 var ScanStruct = redis.ScanStruct
 var String = redis.String
 var Strings = redis.Strings
+var Uint64 = redis.Uint64
 var Values = redis.Values
 
 type Args struct{ redis.Args }
 type Error struct{ redis.Error }
 type Message struct{ redis.Message }
 type PMessage struct{ redis.PMessage }
+type Pong struct{ redis.Pong }
 type PubSubConn struct{ redis.PubSubConn }
 type Script struct{ redis.Script }
+
+func NewScript(keyCount int, src string) *Script {
+	s := redis.NewScript(keyCount, src)
+	return &Script{Script: *s}
+}
+
 type Subscription struct{ redis.Subscription }
